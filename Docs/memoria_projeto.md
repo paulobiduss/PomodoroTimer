@@ -109,8 +109,3 @@ O **PomodoroTimer** é um aplicativo desktop escrito em Python utilizando PyQt6.
 
 ### Limita??o observada (n?o corrigida)
 - H? mistura de encoding legada em partes do projeto/documenta??o (acentua??o inconsistente em alguns ambientes/terminais). O ponto foi registrado e n?o corrigido nesta etapa por n?o ser escopo da feature.
-
-## 7. Status de Publicacao
-- Reposit?rio p?blico no GitHub: [ ] (usu?rio deve preencher a URL)
-- Vers?o publicada: 1.0.0
-- Execut?vel dispon?vel em Releases: [ ] (fazer upload manual do .exe)
