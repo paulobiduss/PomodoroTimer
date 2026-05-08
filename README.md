@@ -3,8 +3,6 @@ Feito com IA
 
 > Aplicativo desktop Pomodoro em PyQt6 com plano de sessões finito, overlay imersivo e execução em bandeja do sistema.
 
-![screenshot](assets/screenshot.png)
-
 ## Funcionalidades
 
 - Timer com progresso circular e contagem regressiva em tempo real
