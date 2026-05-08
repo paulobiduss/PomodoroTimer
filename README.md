@@ -1,5 +1,7 @@
 # PomodoroTimer
-Feito com IA
+Feito com IA, Codex e Claude.
+Claude para melhorar o prompt.
+Codex para codigo. 
 
 > Aplicativo desktop Pomodoro em PyQt6 com plano de sessões finito, overlay imersivo e execução em bandeja do sistema.
 
