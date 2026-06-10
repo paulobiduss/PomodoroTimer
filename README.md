@@ -151,12 +151,6 @@ pomodoro/
 - `ui/windows/overlay_window.py`: overlays de transição e conclusão
 - `ui/tray.py`: integração com bandeja do sistema
 
-## Roadmap
-
-- [ ] Implementar estatísticas de longo prazo de sessões (relatórios em SQLite ou JSON robusto)
-- [ ] Explorar customização mais aprofundada de themes ou modos de notificação silenciosa
-- [ ] Avaliar integração futura com lista simples de To-Do conectada aos ciclos
-
 ## Sobre o desenvolvimento
 
 Este projeto foi desenvolvido com o auxílio de IA (Claude Code), que atuou como
