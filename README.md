@@ -137,9 +137,6 @@ pomodoro/
     - timer_window.py
 - tests/
   - test_focus_history.py
-- Docs/
-  - AGENTS.md
-  - memoria_projeto.md
 ```
 
 ## Arquitetura
@@ -156,11 +153,14 @@ pomodoro/
 
 ## Roadmap
 
-Extraído de `Docs/memoria_projeto.md`:
-
 - [ ] Implementar estatísticas de longo prazo de sessões (relatórios em SQLite ou JSON robusto)
 - [ ] Explorar customização mais aprofundada de themes ou modos de notificação silenciosa
 - [ ] Avaliar integração futura com lista simples de To-Do conectada aos ciclos
+
+## Sobre o desenvolvimento
+
+Este projeto foi desenvolvido com o auxílio de IA (Claude Code), que atuou como
+desenvolvedor principal sob orientação e revisão do autor.
 
 ## Changelog
 
