@@ -2,6 +2,8 @@
 
 > Aplicativo desktop Pomodoro em PyQt6 com plano de sessões finito, overlay imersivo, histórico de foco diário e execução em bandeja do sistema.
 
+![Janela principal do PomodoroTimer](assets/screenshots/main_window.png)
+
 ## Funcionalidades
 
 - Timer com progresso circular e contagem regressiva em tempo real
@@ -14,6 +16,60 @@
 - Persistência de configurações e histórico com QSettings
 - Ícones SVG programáticos via `IconFactory` para consistência visual
 - Arquitetura modular em `core/`, `ui/windows/` e `ui/components/`
+
+## Como funciona
+
+### 1. Plano de sessões finito
+
+Ao abrir o app, você define o **Plano de Sessões**:
+
+- **Sessões de foco**: quantos blocos de foco terá o ciclo
+- **Foco (min)**: duração de cada bloco de foco
+- **Pausa curta (min)**: duração da pausa entre os blocos de foco
+- **Pausa longa (opcional)**: bloco final maior, para encerrar o ciclo
+
+A partir desses valores, o `SessionPlan` (`core/session_plan.py`) monta a sequência completa de blocos
+(ex.: Foco → Pausa curta → Foco → Pausa curta → Foco → Pausa longa) e passa a ser a única fonte de
+verdade sobre "qual bloco está em execução agora" e "quanto falta para o plano acabar".
+
+### 2. Execução do timer
+
+O círculo de progresso central mostra a contagem regressiva do bloco atual e o rótulo de estado
+(**Foco**, **Intervalo Curto** ou **Intervalo Longo**), cada um com sua cor própria. A barra
+"X/Y blocos" indica o progresso dentro do plano. Os controles permitem:
+
+- **Play/Pause**: inicia, pausa ou retoma o bloco atual
+- **Pular**: avança imediatamente para o próximo bloco do plano
+- **Reiniciar**: reseta o bloco atual
+
+### 3. Transições e conclusão (overlay)
+
+Ao final de cada bloco, uma janela em tela cheia (`OverlayWindow`) é exibida com som de notificação,
+indicando o que acabou e o que vem a seguir — útil para sinalizar a troca de foco ↔ pausa mesmo que o
+app esteja minimizado. Quando o **plano inteiro** é concluído:
+
+- o timer para e os controles de execução são desabilitados
+- aparece o overlay de **conclusão**, com o resumo de foco do dia comparado a ontem
+- o ciclo só recomeça quando o usuário clica em **Novo Plano**
+
+### 4. Histórico de foco diário
+
+Cada bloco de foco concluído é registrado por `core/focus_history.py`. A barra de resumo mostra:
+
+```
+Hoje: 1h15 | Ontem: -2h00 | Semana: 4h30
+```
+
+— total de foco hoje, diferença em relação a ontem e soma da semana (segunda a domingo).
+
+### 5. Bandeja do sistema (system tray)
+
+O app continua rodando em segundo plano ao fechar a janela. Pelo ícone na bandeja é possível:
+
+- ver o estado atual e o tempo restante no tooltip
+- mostrar a janela principal (clique duplo)
+- pausar/retomar e pular a sessão atual
+- sair do aplicativo
 
 ## Pré-requisitos
 
@@ -62,6 +118,8 @@ pomodoro/
 - assets/
   - icon.png
   - notify.wav
+  - screenshots/
+    - main_window.png
 - core/
   - assets.py
   - constants.py
