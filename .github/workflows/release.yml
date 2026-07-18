@@ -1,0 +1,177 @@
+name: Release
+
+# Gera os pacotes Windows (.zip) e macOS (.dmg) e publica um GitHub Release.
+# Disparo por push de tag vX.Y.Z, ou manualmente (workflow_dispatch) informando
+# a versao. PyInstaller nao faz cross-compile, entao cada plataforma e compilada
+# em seu proprio runner.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versao do release (ex: v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write # necessario para criar o GitHub Release / a tag
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Define a versao usada por todos os jobs (tag empurrada ou input manual).
+  # ---------------------------------------------------------------------------
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Determinar versao
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Windows: gera o pacote portatil (.zip com o PomodoroTimer.exe)
+  # ---------------------------------------------------------------------------
+  build-windows:
+    needs: prepare
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Instalar dependencias
+        run: pip install PyQt6==6.11.0 pyinstaller==6.20.0 Pillow
+
+      - name: Gerar icone .ico
+        run: |
+          python -c "from PIL import Image; Image.open('assets/icon.png').convert('RGBA').save('icon.ico', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])"
+
+      - name: Build com PyInstaller
+        run: >
+          pyinstaller -y --clean --onedir --windowed
+          --name PomodoroTimer
+          --icon icon.ico
+          --add-data "assets;assets"
+          --hidden-import PyQt6.QtCore
+          --hidden-import PyQt6.QtGui
+          --hidden-import PyQt6.QtSvg
+          --hidden-import PyQt6.QtWidgets
+          --hidden-import PyQt6.sip
+          main.py
+
+      - name: Copiar docs para o pacote
+        run: |
+          Copy-Item README.md    dist/PomodoroTimer/README.md
+          Copy-Item LICENSE      dist/PomodoroTimer/LICENSE
+          Copy-Item CHANGELOG.md dist/PomodoroTimer/CHANGELOG.md
+
+      - name: Gerar .zip portatil
+        run: Compress-Archive -Path dist/PomodoroTimer -DestinationPath "PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip" -Force
+
+      - name: Upload do artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # macOS: gera o PomodoroTimer.app e empacota em um instalador .dmg
+  # ---------------------------------------------------------------------------
+  build-macos:
+    needs: prepare
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Instalar dependencias
+        run: pip install PyQt6==6.11.0 pyinstaller==6.20.0 Pillow
+
+      - name: Gerar icone .icns
+        run: |
+          set -e
+          # Normaliza o icon.png (que na verdade e um JPEG) para PNG quadrado.
+          sips -s format png assets/icon.png --out icon_src.png
+          mkdir -p icon.iconset
+          for size in 16 32 64 128 256 512; do
+            sips -z $size $size icon_src.png --out "icon.iconset/icon_${size}x${size}.png"
+            double=$((size * 2))
+            sips -z $double $double icon_src.png --out "icon.iconset/icon_${size}x${size}@2x.png"
+          done
+          iconutil -c icns icon.iconset -o icon.icns
+
+      - name: Build com PyInstaller
+        run: >
+          pyinstaller -y --clean --onedir --windowed
+          --name PomodoroTimer
+          --icon icon.icns
+          --add-data "assets:assets"
+          --hidden-import PyQt6.QtCore
+          --hidden-import PyQt6.QtGui
+          --hidden-import PyQt6.QtSvg
+          --hidden-import PyQt6.QtWidgets
+          --hidden-import PyQt6.sip
+          main.py
+
+      - name: Empacotar .dmg
+        run: |
+          set -e
+          mkdir -p dmg_staging
+          cp -R "dist/PomodoroTimer.app" dmg_staging/
+          ln -s /Applications dmg_staging/Applications
+          hdiutil create \
+            -volname PomodoroTimer \
+            -srcfolder dmg_staging \
+            -ov -format UDZO \
+            "PomodoroTimer-${{ needs.prepare.outputs.version }}-macos.dmg"
+
+      - name: Upload do artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-package
+          path: PomodoroTimer-${{ needs.prepare.outputs.version }}-macos.dmg
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Release: baixa os dois pacotes e cria o GitHub Release da versao
+  # ---------------------------------------------------------------------------
+  release:
+    runs-on: ubuntu-latest
+    needs: [prepare, build-windows, build-macos]
+    steps:
+      - name: Baixar artefatos
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Criar GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.version }}
+          name: PomodoroTimer ${{ needs.prepare.outputs.version }}
+          generate_release_notes: true
+          files: |
+            artifacts/PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip
+            artifacts/PomodoroTimer-${{ needs.prepare.outputs.version }}-macos.dmg

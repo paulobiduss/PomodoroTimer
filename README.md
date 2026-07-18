@@ -71,9 +71,20 @@ O app continua rodando em segundo plano ao fechar a janela. Pelo ícone na bande
 - pausar/retomar e pular a sessão atual
 - sair do aplicativo
 
-## Pré-requisitos
+## Download (usuários)
 
-- Windows 10 ou superior
+Os aplicativos prontos ficam em **[GitHub Releases](https://github.com/paulobiduss/PomodoroTimer/releases)**:
+
+- **Windows**: `PomodoroTimer-vX.Y.Z-windows-portable.zip` — extraia e execute `PomodoroTimer.exe` (portátil, sem instalação).
+- **macOS**: `PomodoroTimer-vX.Y.Z-macos.dmg` — abra o `.dmg` e arraste o `PomodoroTimer.app` para a pasta *Aplicativos*.
+
+> **macOS (app não assinado):** como o app não é assinado/notarizado, na primeira
+> abertura use **clique com o botão direito no app → Abrir** e confirme. Isso é
+> necessário apenas uma vez.
+
+## Pré-requisitos (desenvolvimento)
+
+- Windows 10+ ou macOS
 - Python 3.11+
 - Pip
 
@@ -103,6 +114,21 @@ e gera dois outputs:
 
 - Executável: `C:\tmp\PomodoroTimer_dist\PomodoroTimer\PomodoroTimer.exe`
 - Pacote portátil: `C:\tmp\PomodoroTimer_release\PomodoroTimer-portable.zip`
+
+## Publicar um release (Windows + macOS)
+
+Os pacotes oficiais para Windows e macOS são gerados automaticamente pelo GitHub
+Actions (`.github/workflows/release.yml`) sempre que uma tag `vX.Y.Z` é enviada.
+Não é possível compilar o app do macOS localmente no Windows — o workflow compila
+cada plataforma em seu próprio runner (`windows-latest` e `macos-latest`).
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+O workflow compila os dois pacotes e cria um **GitHub Release** com o `.zip`
+(Windows) e o `.dmg` (macOS) anexados.
 
 ## Estrutura do projeto
 
