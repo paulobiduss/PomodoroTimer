@@ -12,7 +12,8 @@ Fluxo Logico:
 """
 
 import os
-import winsound
+import subprocess
+import sys
 from datetime import datetime
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
@@ -304,11 +305,47 @@ class OverlayWindow(QWidget):
         self.close()
 
     def _play_notification_sound(self):
+        """Toca o som de notificacao de forma assincrona e multiplataforma.
+
+        Windows usa winsound (nativo); macOS usa afplay; Linux tenta paplay/aplay.
+        Se nao houver arquivo de audio ou o player falhar, cai para um beep simples.
+        """
+        has_audio = bool(self._audio_path) and os.path.exists(self._audio_path)
         try:
-            if self._audio_path and os.path.exists(self._audio_path):
-                winsound.PlaySound(self._audio_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+            if sys.platform == "win32":
+                import winsound
+
+                if has_audio:
+                    winsound.PlaySound(
+                        self._audio_path, winsound.SND_FILENAME | winsound.SND_ASYNC
+                    )
+                else:
+                    winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+                return
+
+            if sys.platform == "darwin":
+                players = [["afplay", self._audio_path]] if has_audio else []
             else:
-                winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+                players = (
+                    [["paplay", self._audio_path], ["aplay", "-q", self._audio_path]]
+                    if has_audio
+                    else []
+                )
+
+            for cmd in players:
+                try:
+                    subprocess.Popen(
+                        cmd,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    return
+                except FileNotFoundError:
+                    continue
+
+            # Fallback universal: beep do terminal (nao bloqueia).
+            sys.stdout.write("\a")
+            sys.stdout.flush()
         except Exception:
             pass
 

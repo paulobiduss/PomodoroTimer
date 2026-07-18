@@ -134,6 +134,14 @@ jobs:
           --hidden-import PyQt6.sip
           main.py
 
+      - name: Assinar app (ad-hoc)
+        run: |
+          set -e
+          # Assinatura ad-hoc profunda: no Apple Silicon uma assinatura invalida
+          # faz o macOS matar o app ao abrir. Isto garante uma assinatura valida.
+          codesign --force --deep --sign - "dist/PomodoroTimer.app"
+          codesign --verify --deep --strict --verbose=2 "dist/PomodoroTimer.app"
+
       - name: Empacotar .dmg
         run: |
           set -e
