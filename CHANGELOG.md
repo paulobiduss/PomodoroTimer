@@ -3,7 +3,7 @@
 Todas as mudanças notáveis neste projeto serão documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
-## [Não publicado]
+## [1.0.2] — 2026-08-29
 
 ### Alterado
 - Som de notificação refeito: antes era um tom único de 440 Hz em volume máximo
