@@ -146,6 +146,8 @@ pomodoro/
   - notify.wav
   - screenshots/
     - main_window.png
+- tools/
+  - generate_notify_sound.py
 - core/
   - assets.py
   - constants.py
