@@ -61,6 +61,11 @@ jobs:
         run: |
           python -c "from PIL import Image; Image.open('assets/icon.png').convert('RGBA').save('icon.ico', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])"
 
+      - name: Gerar version_info.txt com a versao do release
+        env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: python tools/render_version_info.py "$env:RELEASE_VERSION" version_info.txt
+
       - name: Build com PyInstaller
         run: >
           pyinstaller -y --clean --onedir --windowed --noupx

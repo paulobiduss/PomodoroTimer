@@ -183,6 +183,7 @@ pomodoro/
     - main_window.png
 - tools/
   - generate_notify_sound.py
+  - render_version_info.py
 - core/
   - assets.py
   - constants.py
@@ -200,6 +201,7 @@ pomodoro/
     - timer_window.py
 - tests/
   - test_focus_history.py
+  - test_render_version_info.py
 ```
 
 ## Arquitetura

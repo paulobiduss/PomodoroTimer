@@ -10,6 +10,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   `.exe` (nome do produto, empresa, descrição) e desativa a compressão UPX
   (`--noupx`), reduzindo falsos positivos comuns de antivírus em executáveis
   gerados por PyInstaller.
+- `version_info.txt` passou a ser gerado dinamicamente a partir da tag do
+  release (`tools/render_version_info.py`) no job `build-windows`, evitando
+  que o `FileVersion` do `.exe` fique dessincronizado da versão publicada
+  (aconteceu no teste do v1.0.3: o `.exe` saiu com `FileVersion 1.0.2.0`
+  porque o arquivo era mantido manualmente).
 - O release no GitHub Actions passou a publicar um arquivo `.sha256` junto de
   cada pacote (Windows e macOS), para o usuário verificar a integridade do
   download.
