@@ -90,11 +90,13 @@ echo [3/5] Rodando PyInstaller...
   --clean ^
   --onedir ^
   --windowed ^
+  --noupx ^
   --distpath "%DIST_ROOT%" ^
   --workpath "%WORK_ROOT%" ^
   --specpath "%SPEC_ROOT%" ^
   --name PomodoroTimer ^
   --icon="%CD%\assets\icon.png" ^
+  --version-file="%CD%\version_info.txt" ^
   --add-data "%CD%\assets;assets" ^
   --hidden-import PyQt6.QtCore ^
   --hidden-import PyQt6.QtGui ^

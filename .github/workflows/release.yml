@@ -61,11 +61,17 @@ jobs:
         run: |
           python -c "from PIL import Image; Image.open('assets/icon.png').convert('RGBA').save('icon.ico', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])"
 
+      - name: Gerar version_info.txt com a versao do release
+        env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: python tools/render_version_info.py "$env:RELEASE_VERSION" version_info.txt
+
       - name: Build com PyInstaller
         run: >
-          pyinstaller -y --clean --onedir --windowed
+          pyinstaller -y --clean --onedir --windowed --noupx
           --name PomodoroTimer
           --icon icon.ico
+          --version-file version_info.txt
           --add-data "assets;assets"
           --hidden-import PyQt6.QtCore
           --hidden-import PyQt6.QtGui
@@ -83,11 +89,18 @@ jobs:
       - name: Gerar .zip portatil
         run: Compress-Archive -Path dist/PomodoroTimer -DestinationPath "PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip" -Force
 
+      - name: Gerar checksum SHA-256
+        run: |
+          $hash = (Get-FileHash "PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip" -Algorithm SHA256).Hash.ToLower()
+          "$hash  PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip" | Out-File -Encoding ascii "PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip.sha256"
+
       - name: Upload do artefato
         uses: actions/upload-artifact@v4
         with:
           name: windows-package
-          path: PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip
+          path: |
+            PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip
+            PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip.sha256
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
@@ -154,11 +167,16 @@ jobs:
             -ov -format UDZO \
             "PomodoroTimer-${{ needs.prepare.outputs.version }}-macos.dmg"
 
+      - name: Gerar checksum SHA-256
+        run: shasum -a 256 "PomodoroTimer-${{ needs.prepare.outputs.version }}-macos.dmg" > "PomodoroTimer-${{ needs.prepare.outputs.version }}-macos.dmg.sha256"
+
       - name: Upload do artefato
         uses: actions/upload-artifact@v4
         with:
           name: macos-package
-          path: PomodoroTimer-${{ needs.prepare.outputs.version }}-macos.dmg
+          path: |
+            PomodoroTimer-${{ needs.prepare.outputs.version }}-macos.dmg
+            PomodoroTimer-${{ needs.prepare.outputs.version }}-macos.dmg.sha256
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
@@ -182,4 +200,6 @@ jobs:
           generate_release_notes: true
           files: |
             artifacts/PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip
+            artifacts/PomodoroTimer-${{ needs.prepare.outputs.version }}-windows-portable.zip.sha256
             artifacts/PomodoroTimer-${{ needs.prepare.outputs.version }}-macos.dmg
+            artifacts/PomodoroTimer-${{ needs.prepare.outputs.version }}-macos.dmg.sha256
