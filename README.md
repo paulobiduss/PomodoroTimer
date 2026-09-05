@@ -78,9 +78,43 @@ Os aplicativos prontos ficam em **[GitHub Releases](https://github.com/paulobidu
 - **Windows**: `PomodoroTimer-vX.Y.Z-windows-portable.zip` — extraia e execute `PomodoroTimer.exe` (portátil, sem instalação).
 - **macOS**: `PomodoroTimer-vX.Y.Z-macos.dmg` — abra o `.dmg` e arraste o `PomodoroTimer.app` para a pasta *Aplicativos*.
 
-> **macOS (app não assinado):** como o app não é assinado/notarizado, na primeira
-> abertura use **clique com o botão direito no app → Abrir** e confirme. Isso é
-> necessário apenas uma vez.
+### Por que o Windows/macOS mostra um aviso de segurança?
+
+Este é um projeto independente, distribuído gratuitamente, e **não possui um
+certificado de assinatura de código pago** (Apple Developer Program ou uma CA de
+assinatura Windows). Por isso o Windows Defender SmartScreen e o macOS Gatekeeper
+avisam que o desenvolvedor não é "verificado" — isso não significa que o app
+tenha malware, apenas que ninguém pagou para assinar o binário. O código-fonte é
+100% aberto neste repositório para quem quiser auditar antes de rodar.
+
+**Windows — "O Windows protegeu o computador":**
+
+1. Na tela do SmartScreen, clique em **Mais informações**.
+2. Clique em **Executar assim mesmo**.
+
+**macOS — "Não é possível verificar o desenvolvedor" (ou "app está danificado"):**
+
+1. Clique com o **botão direito** (ou Ctrl+clique) no `PomodoroTimer.app` → **Abrir**.
+2. Confirme em **Abrir** na caixa de diálogo. Necessário apenas na primeira execução.
+3. Se aparecer "app está danificado e não pode ser aberto" (comum em downloads
+   pelo navegador, que marcam o arquivo como quarentena), rode no Terminal:
+   ```bash
+   xattr -cr /Applications/PomodoroTimer.app
+   ```
+
+### Verificando a integridade do download
+
+Cada release inclui um arquivo `.sha256` ao lado do pacote. Para conferir que o
+download não foi corrompido/adulterado:
+
+```bash
+# macOS/Linux
+shasum -a 256 -c PomodoroTimer-vX.Y.Z-macos.dmg.sha256
+
+# Windows (PowerShell)
+Get-FileHash PomodoroTimer-vX.Y.Z-windows-portable.zip -Algorithm SHA256
+# compare o hash exibido com o conteúdo do arquivo .sha256 correspondente
+```
 
 ## Pré-requisitos (desenvolvimento)
 
@@ -137,6 +171,7 @@ pomodoro/
 - main.py
 - requirements.txt
 - build.bat
+- version_info.txt
 - README.md
 - CHANGELOG.md
 - .gitignore

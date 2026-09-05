@@ -3,6 +3,20 @@
 Todas as mudanças notáveis neste projeto serão documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## [Não lançado]
+
+### Alterado
+- Build do Windows agora embute metadados de versão (`version_info.txt`) no
+  `.exe` (nome do produto, empresa, descrição) e desativa a compressão UPX
+  (`--noupx`), reduzindo falsos positivos comuns de antivírus em executáveis
+  gerados por PyInstaller.
+- O release no GitHub Actions passou a publicar um arquivo `.sha256` junto de
+  cada pacote (Windows e macOS), para o usuário verificar a integridade do
+  download.
+- README ampliado com instruções passo a passo de como abrir o app com
+  segurança no Windows (SmartScreen) e no macOS (Gatekeeper/quarentena), já
+  que o projeto não possui certificado de assinatura de código pago.
+
 ## [1.0.2] — 2026-08-29
 
 ### Alterado
