@@ -2,7 +2,9 @@
 
 > Aplicativo desktop Pomodoro em PyQt6 com plano de sessões finito, overlay imersivo, histórico de foco diário e execução em bandeja do sistema.
 
-![Janela principal do PomodoroTimer](assets/screenshots/main_window.png)
+| Tema escuro | Tema claro (pausa + painel do plano) |
+|---|---|
+| ![Janela principal no tema escuro](assets/screenshots/main_window.png) | ![Janela principal no tema claro](assets/screenshots/main_window_light.png) |
 
 ## Funcionalidades
 
@@ -14,6 +16,9 @@
 - Histórico de foco diário persistido, com migração automática do valor acumulado legado
 - System tray com ações rápidas (mostrar, pausar/retomar, pular, sair)
 - Persistência de configurações e histórico com QSettings
+- Visual "glass" minimalista com tema escuro e claro (botão sol/lua na barra de título)
+- Cada estado tem seu gradiente: foco (laranja → rosa), pausa curta (verde → azul), pausa longa (índigo → violeta)
+- Barra segmentada com um segmento por bloco do plano; painel do plano abre pela engrenagem
 - Ícones SVG programáticos via `IconFactory` para consistência visual
 - Arquitetura modular em `core/`, `ui/windows/` e `ui/components/`
 
@@ -146,6 +151,7 @@ pomodoro/
   - notify.wav
   - screenshots/
     - main_window.png
+    - main_window_light.png
 - tools/
   - generate_notify_sound.py
 - core/
@@ -156,15 +162,20 @@ pomodoro/
   - session_plan.py
   - settings.py
 - ui/
+  - theme.py
   - tray.py
   - components/
     - circular_progress.py
+    - segmented_progress.py
     - title_bar.py
   - windows/
     - overlay_window.py
     - timer_window.py
 - tests/
   - test_focus_history.py
+  - test_segmented_progress.py
+  - test_theme.py
+  - test_timer_window_theme.py
 ```
 
 ## Arquitetura
@@ -175,6 +186,7 @@ pomodoro/
 - `core/settings.py`: persistência de preferências e histórico do usuário
 - `core/icon_factory.py`: geração de ícones SVG em runtime
 - `core/assets.py`: resolução de caminhos de assets para dev e PyInstaller
+- `ui/theme.py`: paletas escuro/claro, gradientes por estado e folhas de estilo (QSS)
 - `ui/windows/timer_window.py`: janela principal e interação do plano com a UI
 - `ui/windows/overlay_window.py`: overlays de transição e conclusão
 - `ui/tray.py`: integração com bandeja do sistema

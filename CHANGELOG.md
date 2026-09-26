@@ -3,7 +3,23 @@
 Todas as mudanças notáveis neste projeto serão documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
-## [1.0.2] — 2026-08-29
+## [Não lançado]
+
+### Alterado
+- Novo visual "glass" minimalista da janela principal, com versões escura e
+  clara: fundo em gradiente, cartão translúcido, anel de progresso com gradiente
+  e brilho, e botões arredondados.
+- Cada estado ganhou um gradiente próprio (foco laranja → rosa, pausa curta
+  verde → azul, pausa longa índigo → violeta, plano concluído âmbar).
+- A barra "X/Y blocos" virou uma barra segmentada (um segmento por bloco).
+- O painel "Plano de Sessões" fica recolhido e abre pela engrenagem da barra de
+  título; o tema é trocado pelo ícone de sol/lua. A janela ajusta a altura ao
+  conteúdo (o redimensionamento manual foi removido).
+
+### Corrigido
+- No tema claro, o tempo no centro do anel era desenhado em branco (cor fixa).
+
+ — 2026-08-29
 
 ### Alterado
 - Som de notificação refeito: antes era um tom único de 440 Hz em volume máximo
