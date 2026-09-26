@@ -3,7 +3,28 @@
 Todas as mudanças notáveis neste projeto serão documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
-## [1.0.2] — 2026-08-29
+## [1.1.0] — 2026-09-26
+
+### Alterado
+- Novo visual "glass" minimalista da janela principal, com versões escura e
+  clara: fundo em gradiente, cartão translúcido, anel de progresso com gradiente
+  e brilho, e botões arredondados.
+- Cada estado ganhou um gradiente próprio (foco laranja → rosa, pausa curta
+  verde → azul, pausa longa índigo → violeta, plano concluído âmbar).
+- A barra "X/Y blocos" virou uma barra segmentada (um segmento por bloco).
+- O painel "Plano de Sessões" fica recolhido e abre pela engrenagem da barra de
+  título; o tema é trocado pelo ícone de sol/lua. A janela ajusta a altura ao
+  conteúdo (o redimensionamento manual foi removido).
+- Overlay de transição e de conclusão no mesmo visual: painel em gradiente,
+  rótulo "PRÓXIMO BLOCO"/"CICLO FINALIZADO" na cor do estado, resumo em cartão
+  translúcido e botões em pílula. Agora respeita o tema claro também no fundo.
+- Menu da bandeja com cantos arredondados, cores do tema escolhido (atualiza ao
+  trocar o tema) e ícone da bandeja na cor do estado atual.
+
+### Corrigido
+- No tema claro, o tempo no centro do anel era desenhado em branco (cor fixa).
+
+ — 2026-08-29
 
 ### Alterado
 - Som de notificação refeito: antes era um tom único de 440 Hz em volume máximo

@@ -15,12 +15,11 @@ from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractSpinBox,
     QCheckBox,
-    QGroupBox,
+    QFrame,
     QHBoxLayout,
     QLabel,
-    QProgressBar,
+    QLayout,
     QPushButton,
-    QSizeGrip,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -37,12 +36,23 @@ from core.icon_factory import IconFactory
 from core.session_plan import SessionPlan
 from core.settings import AppSettings
 from ui.components.circular_progress import CircularProgress
+from ui.components.fonts import spaced_font
+from ui.components.segmented_progress import SegmentedProgress
 from ui.components.title_bar import DraggableTitleBar
+from ui.theme import (
+    THEME_DARK,
+    THEME_LIGHT,
+    build_accent_stylesheets,
+    build_stylesheet,
+    gradient_for,
+    palette_for,
+)
 
 
 class TimerWindow(QWidget):
     session_finished = pyqtSignal(str, int, int)
     plan_config_changed = pyqtSignal()
+    theme_changed = pyqtSignal(str)
 
     def __init__(self, settings: AppSettings, session_plan: SessionPlan):
         super().__init__()
@@ -53,6 +63,8 @@ class TimerWindow(QWidget):
         self._is_paused = False
         self._remaining_seconds = 0
         self._total_seconds = 0
+        self._plan_status_text = ""
+        self._palette = palette_for(self._settings.theme)
 
         self._setup_window()
         self._build_ui()
@@ -63,120 +75,112 @@ class TimerWindow(QWidget):
     def _setup_window(self):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setFixedWidth(380)
-        self.setMinimumHeight(620)
+        self.setFixedWidth(360)
 
     def _build_ui(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
+        # Janela acompanha o conteudo: encolhe/cresce ao abrir o painel do plano.
+        root.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
 
         self._container = QWidget()
         self._container.setObjectName("container")
+        self._container.setFixedWidth(360)
         root.addWidget(self._container)
 
         layout = QVBoxLayout(self._container)
-        layout.setContentsMargins(24, 16, 24, 24)
-        layout.setSpacing(12)
+        layout.setContentsMargins(20, 14, 20, 20)
+        layout.setSpacing(14)
 
         layout.addWidget(self._build_title_bar())
-
-        state_row = QHBoxLayout()
-        state_row.setSpacing(8)
-        state_row.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self._state_icon = QLabel()
-        self._state_icon.setFixedSize(20, 20)
-        self._state_badge = QLabel("Foco")
-        self._state_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._state_badge.setObjectName("stateBadge")
-
-        state_row.addWidget(self._state_icon)
-        state_row.addWidget(self._state_badge)
-        layout.addLayout(state_row)
-
-        self._circular = CircularProgress()
-        h_circ = QHBoxLayout()
-        h_circ.addStretch()
-        h_circ.addWidget(self._circular)
-        h_circ.addStretch()
-        layout.addLayout(h_circ)
-
-        self._plan_status_label = QLabel("Sessao 1 de 1")
-        self._plan_status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._plan_status_label.setObjectName("sessionCounter")
-        layout.addWidget(self._plan_status_label)
-
-        self._plan_progress = QProgressBar()
-        self._plan_progress.setObjectName("planProgress")
-        self._plan_progress.setTextVisible(True)
-        self._plan_progress.setRange(0, 100)
-        self._plan_progress.setValue(0)
-        layout.addWidget(self._plan_progress)
+        layout.addWidget(self._build_timer_card())
+        layout.addLayout(self._build_controls())
 
         self._history_label = QLabel("Hoje: 0min | Ontem: igual a ontem | Semana: 0min")
         self._history_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._history_label.setObjectName("historyLabel")
         layout.addWidget(self._history_label)
 
-        layout.addLayout(self._build_controls())
-        layout.addWidget(self._build_settings_panel())
-
-        theme_btn = QPushButton("Alternar Tema")
-        theme_btn.setObjectName("themeBtn")
-        theme_btn.setIcon(IconFactory.get("settings", color="#FFFFFF", size=14))
-        theme_btn.clicked.connect(self._toggle_theme)
-        layout.addWidget(theme_btn)
-
-        resize_row = QHBoxLayout()
-        resize_row.addStretch()
-        self._size_grip = QSizeGrip(self)
-        resize_row.addWidget(self._size_grip, 0, Qt.AlignmentFlag.AlignRight)
-        layout.addLayout(resize_row)
+        self._settings_card = self._build_settings_panel()
+        self._settings_card.setVisible(False)
+        layout.addWidget(self._settings_card)
 
         self._qt_timer = QTimer(self)
         self._qt_timer.timeout.connect(self._tick)
+
+    def _build_timer_card(self) -> QFrame:
+        card = QFrame()
+        card.setObjectName("glassCard")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(20, 18, 20, 18)
+        layout.setSpacing(6)
+
+        state_row = QHBoxLayout()
+        state_row.setSpacing(6)
+        state_row.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._state_icon = QLabel()
+        self._state_icon.setFixedSize(16, 16)
+        self._state_badge = QLabel("FOCO")
+        self._state_badge.setObjectName("stateLabel")
+        self._state_badge.setFont(spaced_font(10, 3.0))
+        state_row.addWidget(self._state_icon)
+        state_row.addWidget(self._state_badge)
+        layout.addLayout(state_row)
+
+        self._circular = CircularProgress()
+        layout.addWidget(self._circular, 0, Qt.AlignmentFlag.AlignHCenter)
+
+        self._plan_progress = SegmentedProgress()
+        layout.addWidget(self._plan_progress)
+
+        self._blocks_label = QLabel("0/1 blocos")
+        self._blocks_label.setObjectName("blocksLabel")
+        self._blocks_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self._blocks_label)
+        return card
 
     def _build_title_bar(self) -> QWidget:
         title_bar = DraggableTitleBar(self)
         title_bar.setObjectName("titleBar")
 
         bar = QHBoxLayout(title_bar)
-        bar.setContentsMargins(0, 0, 0, 0)
+        bar.setContentsMargins(4, 0, 0, 0)
+        bar.setSpacing(2)
 
-        title = QLabel("PomodoroTimer")
+        title = QLabel("Pomodoro")
         title.setObjectName("titleLabel")
         title.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         bar.addWidget(title)
         bar.addStretch()
 
-        min_btn = QPushButton("")
-        min_btn.setObjectName("winBtn")
-        min_btn.setFixedSize(28, 28)
-        min_btn.setIcon(IconFactory.get("stop", color="#8A8A8A", size=12))
-        min_btn.setToolTip("Minimizar")
-        min_btn.clicked.connect(self.showMinimized)
+        self._theme_btn = self._title_button("winBtn", "Alternar tema", self._toggle_theme)
+        self._settings_btn = self._title_button("winBtn", "Plano de sessoes", self._toggle_settings_panel)
+        self._settings_btn.setCheckable(True)
+        self._min_btn = self._title_button("winBtn", "Minimizar", self.showMinimized)
+        self._close_btn = self._title_button("closeBtn", "Ocultar para bandeja", self._hide_to_tray)
 
-        close_btn = QPushButton("")
-        close_btn.setObjectName("closeBtn")
-        close_btn.setFixedSize(28, 28)
-        close_btn.setIcon(IconFactory.get("close", color="#8A8A8A", size=12))
-        close_btn.setToolTip("Ocultar para bandeja")
-        close_btn.clicked.connect(self._hide_to_tray)
-
-        bar.addWidget(min_btn)
-        bar.addWidget(close_btn)
+        for button in (self._theme_btn, self._settings_btn, self._min_btn, self._close_btn):
+            bar.addWidget(button)
         return title_bar
+
+    def _title_button(self, object_name: str, tooltip: str, on_click) -> QPushButton:
+        button = QPushButton("")
+        button.setObjectName(object_name)
+        button.setFixedSize(28, 28)
+        button.setToolTip(tooltip)
+        button.setCursor(Qt.CursorShape.PointingHandCursor)
+        button.clicked.connect(on_click)
+        return button
 
     def _build_controls(self) -> QHBoxLayout:
         row = QHBoxLayout()
-        row.setSpacing(10)
+        row.setSpacing(18)
 
         self._reset_btn = QPushButton("")
         self._reset_btn.setObjectName("ctrlBtn")
         self._reset_btn.setToolTip("Reiniciar plano")
         self._reset_btn.setFixedSize(48, 48)
-        self._reset_btn.setIcon(IconFactory.get("reset", color="#FFFFFF", size=20))
         self._reset_btn.clicked.connect(self.reset_plan)
 
         self._start_pause_btn = QPushButton("")
@@ -189,23 +193,27 @@ class TimerWindow(QWidget):
         self._skip_btn.setObjectName("ctrlBtn")
         self._skip_btn.setToolTip("Pular bloco")
         self._skip_btn.setFixedSize(48, 48)
-        self._skip_btn.setIcon(IconFactory.get("skip", color="#FFFFFF", size=20))
         self._skip_btn.clicked.connect(self.skip_session)
 
         row.addStretch()
-        row.addWidget(self._reset_btn)
-        row.addWidget(self._start_pause_btn)
-        row.addWidget(self._skip_btn)
+        for button in (self._reset_btn, self._start_pause_btn, self._skip_btn):
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            row.addWidget(button)
         row.addStretch()
         return row
 
-    def _build_settings_panel(self) -> QGroupBox:
-        group = QGroupBox("Plano de Sessoes")
-        group.setObjectName("settingsGroup")
-        group.setCheckable(True)
-        group.setChecked(False)
+    def _build_settings_panel(self) -> QFrame:
+        group = QFrame()
+        group.setObjectName("glassCard")
 
         layout = QVBoxLayout(group)
+        layout.setContentsMargins(18, 16, 18, 16)
+        layout.setSpacing(10)
+
+        card_title = QLabel("PLANO DE SESSOES")
+        card_title.setObjectName("cardTitle")
+        card_title.setFont(spaced_font(9, 2.0))
+        layout.addWidget(card_title)
 
         def row_spin(label: str, value: int, min_val: int, max_val: int):
             row = QHBoxLayout()
@@ -214,7 +222,8 @@ class TimerWindow(QWidget):
             spin = QSpinBox()
             spin.setRange(min_val, max_val)
             spin.setValue(value)
-            spin.setFixedWidth(82)
+            spin.setFixedWidth(72)
+            spin.setAlignment(Qt.AlignmentFlag.AlignCenter)
             spin.setObjectName("spinBox")
             spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
             row.addWidget(lbl)
@@ -228,6 +237,7 @@ class TimerWindow(QWidget):
         row_long_min, self._spin_long_break_minutes = row_spin("Pausa longa (min):", self._settings.long_break_duration, 1, 60)
 
         self._check_long_break = QCheckBox("Ativar pausa longa ao final")
+        self._check_long_break.setObjectName("longBreakCheck")
         self._check_long_break.setChecked(self._settings.long_break_enabled)
 
         layout.addLayout(row_focus_count)
@@ -244,6 +254,7 @@ class TimerWindow(QWidget):
         save_btn = QPushButton("Salvar Plano")
         save_btn.setObjectName("saveBtn")
         save_btn.setIcon(IconFactory.get("check", color="#FFFFFF", size=14))
+        save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         save_btn.clicked.connect(self._save_settings)
         layout.addWidget(save_btn)
 
@@ -358,9 +369,10 @@ class TimerWindow(QWidget):
         self._is_running = False
         self._is_paused = False
         self._enable_controls(False)
-        self._state_badge.setText("Plano concluido")
-        self._plan_status_label.setText("Plano concluido")
-        self._plan_progress.setValue(100)
+        self._plan_status_text = "Plano concluido"
+        _, total = self._session_plan.progress()
+        self._plan_progress.set_progress(total, total, gradient_for(STATE_COMPLETED))
+        self._blocks_label.setText(f"{total}/{total} blocos")
         self._refresh_state_ui()
         self._refresh_display()
 
@@ -393,22 +405,25 @@ class TimerWindow(QWidget):
         return "focus"
 
     def _refresh_state_ui(self):
-        label, color = STATE_LABELS[self._state]
-        self._state_badge.setText(label)
-        self._state_badge.setStyleSheet(
-            f"color: {color}; font-size: 14px; font-weight: bold; "
-            f"background: {color}22; border-radius: 10px; padding: 4px 12px;"
-        )
-        self._state_icon.setPixmap(IconFactory.pixmap(self._state_icon_name(self._state), color=color, size=18))
+        label, _ = STATE_LABELS[self._state]
+        start, _ = gradient_for(self._state)
+        self._state_badge.setText(label.upper())
+        self._state_icon.setPixmap(IconFactory.pixmap(self._state_icon_name(self._state), color=start, size=16))
+        self._apply_accent_styles()
+
+    def _apply_accent_styles(self):
+        accent = build_accent_stylesheets(self._palette, self._state)
+        for widget in self.findChildren(QWidget):
+            rule = accent.get(widget.objectName())
+            if rule is not None:
+                widget.setStyleSheet(rule)
 
     def _refresh_display(self):
         mm = self._remaining_seconds // 60
         ss = self._remaining_seconds % 60
         time_str = f"{mm:02d}:{ss:02d}"
         progress = self._remaining_seconds / self._total_seconds if self._total_seconds > 0 else 0.0
-        _, color = STATE_LABELS[self._state]
-        state_label, _ = STATE_LABELS[self._state]
-        self._circular.set_progress(progress, time_str, color, state_label)
+        self._circular.set_progress(progress, time_str, gradient_for(self._state), self._plan_status_text)
 
     def _update_plan_progress_ui(self):
         done, total = self._session_plan.progress()
@@ -422,17 +437,17 @@ class TimerWindow(QWidget):
         break_current = sum(1 for s, _ in blocks[: current_index + 1] if s == STATE_SHORT_BREAK)
 
         if current_state == STATE_FOCUS:
-            self._plan_status_label.setText(f"Sessao {max(1, focus_current)} de {max(1, focus_total)}")
+            self._plan_status_text = f"Sessao {max(1, focus_current)} de {max(1, focus_total)}"
         elif current_state == STATE_SHORT_BREAK:
-            self._plan_status_label.setText(f"Pausa {max(1, break_current)} de {max(1, break_total)}")
+            self._plan_status_text = f"Pausa {max(1, break_current)} de {max(1, break_total)}"
         elif current_state == STATE_LONG_BREAK:
-            self._plan_status_label.setText("Pausa longa final")
+            self._plan_status_text = "Pausa longa final"
         else:
-            self._plan_status_label.setText("Plano concluido")
+            self._plan_status_text = "Plano concluido"
 
-        percent = int((done / total) * 100) if total else 0
-        self._plan_progress.setValue(percent)
-        self._plan_progress.setFormat(f"{done}/{total} blocos")
+        self._plan_progress.set_progress(done, total, gradient_for(self._state))
+        self._blocks_label.setText(f"{done}/{total} blocos")
+        self._refresh_display()
 
     def _emit_tray_update(self):
         mm = self._remaining_seconds // 60
@@ -467,127 +482,34 @@ class TimerWindow(QWidget):
         self.plan_config_changed.emit()
 
     def _apply_theme(self):
-        is_dark = self._settings.theme == "dark"
-        if is_dark:
-            bg = "#12121e"
-            surface = "#1a1a2e"
-            text = "#e8e8f0"
-            sub = "#8080a0"
-            border = "#2a2a45"
-            self._circular.set_bg_color("#2a2a3e")
-        else:
-            bg = "#f0f0f8"
-            surface = "#ffffff"
-            text = "#1a1a2e"
-            sub = "#555570"
-            border = "#d0d0e0"
-            self._circular.set_bg_color("#e0e0f0")
-
-        self.setStyleSheet(
-            f"""
-            QWidget#container {{
-                background: {surface};
-                border-radius: 20px;
-                border: 1px solid {border};
-            }}
-            QLabel#titleLabel {{
-                color: {text};
-                font-size: 14px;
-                font-weight: bold;
-                font-family: 'Segoe UI', sans-serif;
-            }}
-            QLabel#sessionCounter, QLabel#historyLabel, QLabel#settingLabel, QLabel#calcLabel {{
-                color: {sub};
-                font-family: 'Segoe UI', sans-serif;
-            }}
-            QLabel#sessionCounter {{ font-size: 13px; }}
-            QLabel#historyLabel {{ font-size: 11px; }}
-            QLabel#settingLabel {{ color: {text}; font-size: 13px; }}
-            QLabel#calcLabel {{ font-size: 11px; }}
-            QPushButton#mainBtn {{
-                background: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 36px;
-                font-size: 24px;
-            }}
-            QPushButton#mainBtn:hover {{ background: #c0392b; }}
-            QPushButton#ctrlBtn {{
-                background: {border};
-                color: {text};
-                border: none;
-                border-radius: 24px;
-                font-size: 18px;
-            }}
-            QPushButton#ctrlBtn:hover {{ background: #e74c3c; color: white; }}
-            QPushButton#winBtn, QPushButton#closeBtn {{
-                background: transparent;
-                color: {sub};
-                border: none;
-                border-radius: 14px;
-                font-size: 14px;
-            }}
-            QPushButton#closeBtn:hover {{ background: #e74c3c; color: white; }}
-            QPushButton#winBtn:hover {{ background: {border}; }}
-            QPushButton#saveBtn, QPushButton#themeBtn {{
-                background: {border};
-                color: {text};
-                border: none;
-                border-radius: 8px;
-                font-size: 12px;
-                padding: 6px;
-                font-family: 'Segoe UI', sans-serif;
-            }}
-            QPushButton#saveBtn:hover, QPushButton#themeBtn:hover {{
-                background: #e74c3c; color: white;
-            }}
-            QGroupBox#settingsGroup {{
-                color: {sub};
-                font-size: 12px;
-                font-family: 'Segoe UI', sans-serif;
-                border: 1px solid {border};
-                border-radius: 10px;
-                margin-top: 8px;
-                padding-top: 8px;
-            }}
-            QGroupBox#settingsGroup::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-            }}
-            QSpinBox#spinBox {{
-                background: {bg};
-                color: {text};
-                border: 1px solid {border};
-                border-radius: 6px;
-                padding: 4px;
-                font-family: 'Segoe UI', sans-serif;
-            }}
-            QProgressBar#planProgress {{
-                border: 1px solid {border};
-                border-radius: 6px;
-                text-align: center;
-                color: {text};
-                background: {bg};
-                height: 18px;
-            }}
-            QProgressBar#planProgress::chunk {{
-                border-radius: 5px;
-                background-color: #e74c3c;
-            }}
-            QCheckBox {{
-                color: {text};
-                font-family: 'Segoe UI', sans-serif;
-                font-size: 12px;
-            }}
-            """
-        )
+        self._palette = palette_for(self._settings.theme)
+        p = self._palette
+        self._circular.set_theme_colors(p.track, p.text, p.text_muted)
+        self._plan_progress.set_track_color(p.track)
+        self.setStyleSheet(build_stylesheet(p))
+        self._refresh_icons()
         self._refresh_state_ui()
+
+    def _refresh_icons(self):
+        """Icones sao pixmaps coloridos; precisam ser refeitos a cada troca de tema."""
+        p = self._palette
+        next_theme_icon = "sun" if p.name == THEME_DARK else "moon"
+        self._theme_btn.setIcon(IconFactory.get(next_theme_icon, color=p.text_muted, size=14))
+        self._settings_btn.setIcon(IconFactory.get("settings", color=p.text_muted, size=14))
+        self._min_btn.setIcon(IconFactory.get("minimize", color=p.text_muted, size=12))
+        self._close_btn.setIcon(IconFactory.get("close", color=p.text_muted, size=12))
+        self._reset_btn.setIcon(IconFactory.get("reset", color=p.text, size=18))
+        self._skip_btn.setIcon(IconFactory.get("skip", color=p.text, size=18))
         self._update_start_pause_icon()
 
     def _toggle_theme(self):
-        self._settings.theme = "light" if self._settings.theme == "dark" else "dark"
+        self._settings.theme = THEME_LIGHT if self._settings.theme == THEME_DARK else THEME_DARK
         self._settings.save()
         self._apply_theme()
+        self.theme_changed.emit(self._settings.theme)
+
+    def _toggle_settings_panel(self):
+        self._settings_card.setVisible(self._settings_btn.isChecked())
 
     def _hide_to_tray(self):
         self.hide()
@@ -601,6 +523,11 @@ class TimerWindow(QWidget):
     @property
     def tray_state(self) -> str:
         return STATE_LABELS[self._state][0]
+
+    @property
+    def tray_accent(self) -> str:
+        """Cor inicial do gradiente do estado atual, usada no icone da bandeja."""
+        return gradient_for(self._state)[0]
 
     @property
     def is_paused(self) -> bool:

@@ -63,7 +63,8 @@ def main():
     timer_window = TimerWindow(settings, session_plan_holder["plan"])
     timer_window.setWindowIcon(app_icon)
 
-    tray = SystemTray(app_icon, timer_window)
+    tray = SystemTray(app_icon, timer_window, theme=settings.theme)
+    timer_window.theme_changed.connect(tray.apply_theme)
     tray.show()
 
     def connect_plan_signals(plan: SessionPlan):
@@ -118,7 +119,7 @@ def main():
 
     def update_tray():
         tray.update_tooltip(timer_window.tray_state, timer_window.tray_time_str)
-        tray.update_pause_action(timer_window.is_paused)
+        tray.update_pause_action(timer_window.is_paused, timer_window.tray_accent)
         tray.update_skip_enabled(timer_window.is_running)
 
     tray_updater = QTimer()
