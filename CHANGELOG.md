@@ -3,7 +3,7 @@
 Todas as mudanças notáveis neste projeto serão documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
-## [Não lançado]
+## [1.1.0] — 2026-09-26
 
 ### Alterado
 - Novo visual "glass" minimalista da janela principal, com versões escura e
