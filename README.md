@@ -19,6 +19,7 @@
 - Visual "glass" minimalista com tema escuro e claro (botão sol/lua na barra de título)
 - Cada estado tem seu gradiente: foco (laranja → rosa), pausa curta (verde → azul), pausa longa (índigo → violeta)
 - Barra segmentada com um segmento por bloco do plano; painel do plano abre pela engrenagem
+- Overlay de transição/conclusão e menu da bandeja seguem o mesmo visual e o tema escolhido
 - Ícones SVG programáticos via `IconFactory` para consistência visual
 - Arquitetura modular em `core/`, `ui/windows/` e `ui/components/`
 
@@ -166,6 +167,7 @@ pomodoro/
   - tray.py
   - components/
     - circular_progress.py
+    - fonts.py
     - segmented_progress.py
     - title_bar.py
   - windows/
@@ -173,6 +175,7 @@ pomodoro/
     - timer_window.py
 - tests/
   - test_focus_history.py
+  - test_overlay_and_tray_theme.py
   - test_segmented_progress.py
   - test_theme.py
   - test_timer_window_theme.py
@@ -186,7 +189,7 @@ pomodoro/
 - `core/settings.py`: persistência de preferências e histórico do usuário
 - `core/icon_factory.py`: geração de ícones SVG em runtime
 - `core/assets.py`: resolução de caminhos de assets para dev e PyInstaller
-- `ui/theme.py`: paletas escuro/claro, gradientes por estado e folhas de estilo (QSS)
+- `ui/theme.py`: paletas escuro/claro, gradientes por estado e folhas de estilo (QSS) da janela, overlay e bandeja
 - `ui/windows/timer_window.py`: janela principal e interação do plano com a UI
 - `ui/windows/overlay_window.py`: overlays de transição e conclusão
 - `ui/tray.py`: integração com bandeja do sistema

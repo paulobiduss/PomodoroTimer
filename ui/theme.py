@@ -50,6 +50,7 @@ class ThemePalette:
     text_muted: str
     track: str
     input_bg: str
+    scrim: str
 
 
 DARK_PALETTE = ThemePalette(
@@ -63,6 +64,7 @@ DARK_PALETTE = ThemePalette(
     text_muted="#8B93A7",
     track="rgba(255, 255, 255, 0.08)",
     input_bg="rgba(0, 0, 0, 0.25)",
+    scrim="rgba(5, 8, 18, 0.72)",
 )
 
 LIGHT_PALETTE = ThemePalette(
@@ -76,6 +78,7 @@ LIGHT_PALETTE = ThemePalette(
     text_muted="#6B7285",
     track="rgba(20, 26, 46, 0.07)",
     input_bg="rgba(20, 26, 46, 0.04)",
+    scrim="rgba(20, 26, 46, 0.45)",
 )
 
 
@@ -203,3 +206,68 @@ def build_accent_stylesheets(palette: ThemePalette, state: str) -> dict[str, str
         """,
         "spinBox": f"QSpinBox:focus {{ border: 1px solid {start}; }}",
     }
+
+
+def build_overlay_stylesheet(palette: ThemePalette, state: str) -> str:
+    """QSS do painel do overlay (transicao/conclusao); o estado nao muda durante a vida do overlay.
+
+    Exemplo: panel.setStyleSheet(build_overlay_stylesheet(palette_for("light"), "focus"))
+    """
+    start, end = gradient_for(state)
+    p = palette
+    return f"""
+        QWidget#panel {{
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 {p.bg_top}, stop:1 {p.bg_bottom});
+            border: 1px solid {p.glass_border};
+            border-radius: 28px;
+        }}
+        QWidget {{ font-family: {FONT_FAMILY}; }}
+        QLabel#overlayState {{ color: {start}; }}
+        QFrame#accentBar {{ background: {_qss_gradient(start, end)}; border-radius: 2px; }}
+        QLabel#overlayTitle {{ color: {p.text}; font-size: 28px; font-weight: 600; }}
+        QLabel#overlayClock {{ color: {p.text_muted}; }}
+        QLabel#overlayInfo {{ color: {p.text_muted}; font-size: 14px; }}
+        QLabel#overlayCountdown {{ color: {p.text_muted}; font-size: 12px; }}
+        QFrame#overlayCard {{
+            background: {p.glass};
+            border: 1px solid {p.glass_border};
+            border-radius: 16px;
+        }}
+        QPushButton#primaryBtn {{
+            background: {_qss_gradient(start, end)};
+            color: #FFFFFF; border: none; border-radius: 24px;
+            font-size: 15px; font-weight: 600; padding: 0 30px;
+        }}
+        QPushButton#primaryBtn:hover {{ background: {_qss_gradient(end, start)}; }}
+        QPushButton#secondaryBtn {{
+            background: {p.glass}; color: {p.text};
+            border: 1px solid {p.glass_border}; border-radius: 24px;
+            font-size: 15px; font-weight: 600; padding: 0 30px;
+        }}
+        QPushButton#secondaryBtn:hover {{ background: {p.glass_hover}; }}
+    """
+
+
+def build_menu_stylesheet(palette: ThemePalette) -> str:
+    """QSS do menu da bandeja. No macOS o menu e nativo e o QSS e ignorado pelo sistema.
+
+    Exemplo: menu.setStyleSheet(build_menu_stylesheet(palette_for("dark")))
+    """
+    p = palette
+    return f"""
+        QMenu {{
+            background: {p.bg_top};
+            color: {p.text};
+            border: 1px solid {p.glass_border};
+            border-radius: 12px;
+            padding: 6px;
+            font-family: {FONT_FAMILY};
+            font-size: 13px;
+        }}
+        QMenu::item {{ padding: 7px 22px 7px 12px; border-radius: 8px; }}
+        QMenu::item:selected {{ background: {p.track}; }}
+        QMenu::item:disabled {{ color: {p.text_muted}; }}
+        QMenu::icon {{ padding-left: 8px; }}
+        QMenu::separator {{ height: 1px; background: {p.glass_border}; margin: 5px 8px; }}
+    """

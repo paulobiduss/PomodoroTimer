@@ -67,6 +67,13 @@ class TimerWindowThemeTest(unittest.TestCase):
         self.assertEqual("light", settings.theme)
         self.assertEqual(1, settings.saved)
 
+    def test_toggle_theme_emits_new_theme(self):
+        window = build_window(FakeAppSettings("dark"))
+        received = []
+        window.theme_changed.connect(received.append)
+        window._toggle_theme()
+        self.assertEqual(["light"], received)
+
     def test_settings_panel_starts_hidden_and_toggles(self):
         window = build_window(FakeAppSettings())
         window.show()

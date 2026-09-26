@@ -23,7 +23,7 @@ class PaletteTest(unittest.TestCase):
     def test_every_palette_color_is_parseable(self):
         for palette in (DARK_PALETTE, LIGHT_PALETTE):
             for field in ("bg_top", "bg_bottom", "glass", "glass_hover", "glass_border",
-                          "text", "text_muted", "track", "input_bg"):
+                          "text", "text_muted", "track", "input_bg", "scrim"):
                 rgba_components(getattr(palette, field))
 
 

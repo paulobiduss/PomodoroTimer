@@ -15,11 +15,11 @@ from PyQt6.QtCore import QRectF, Qt
 from PyQt6.QtGui import QColor, QConicalGradient, QFont, QPainter, QPen
 from PyQt6.QtWidgets import QWidget
 
+from ui.components.fonts import monospace_font
 from ui.theme import rgba_components
 
 RING_WIDTH = 12
 GRADIENT_ORIGIN_OFFSET = 10  # graus; afasta a emenda do gradiente conico da ponta inicial do arco
-TIME_FONT_FAMILIES = ["JetBrains Mono", "Cascadia Mono", "SF Mono", "Menlo", "Consolas", "DejaVu Sans Mono"]
 GLOW_LAYERS = ((26, 18), (20, 30))  # (largura extra do traço, alpha) para simular brilho
 
 
@@ -105,12 +105,7 @@ class CircularProgress(QWidget):
         return gradient
 
     def _draw_texts(self, painter: QPainter):
-        time_font = QFont()
-        time_font.setFamilies(TIME_FONT_FAMILIES)
-        time_font.setPointSize(40)
-        time_font.setWeight(QFont.Weight.Medium)
-        time_font.setStyleHint(QFont.StyleHint.Monospace)
-        painter.setFont(time_font)
+        painter.setFont(monospace_font(40))
         painter.setPen(_qcolor(self._text_color))
         painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self._text)
 

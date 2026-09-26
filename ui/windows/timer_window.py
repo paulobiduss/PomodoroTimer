@@ -12,7 +12,6 @@ Fluxo Logico:
 """
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QAbstractSpinBox,
     QCheckBox,
@@ -37,6 +36,7 @@ from core.icon_factory import IconFactory
 from core.session_plan import SessionPlan
 from core.settings import AppSettings
 from ui.components.circular_progress import CircularProgress
+from ui.components.fonts import spaced_font
 from ui.components.segmented_progress import SegmentedProgress
 from ui.components.title_bar import DraggableTitleBar
 from ui.theme import (
@@ -49,16 +49,10 @@ from ui.theme import (
 )
 
 
-def _spaced_font(point_size: int, letter_spacing: float) -> QFont:
-    # QSS nao suporta letter-spacing; rotulos em caixa alta usam fonte configurada no codigo.
-    font = QFont("Segoe UI", point_size, QFont.Weight.Bold)
-    font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, letter_spacing)
-    return font
-
-
 class TimerWindow(QWidget):
     session_finished = pyqtSignal(str, int, int)
     plan_config_changed = pyqtSignal()
+    theme_changed = pyqtSignal(str)
 
     def __init__(self, settings: AppSettings, session_plan: SessionPlan):
         super().__init__()
@@ -129,7 +123,7 @@ class TimerWindow(QWidget):
         self._state_icon.setFixedSize(16, 16)
         self._state_badge = QLabel("FOCO")
         self._state_badge.setObjectName("stateLabel")
-        self._state_badge.setFont(_spaced_font(10, 3.0))
+        self._state_badge.setFont(spaced_font(10, 3.0))
         state_row.addWidget(self._state_icon)
         state_row.addWidget(self._state_badge)
         layout.addLayout(state_row)
@@ -218,7 +212,7 @@ class TimerWindow(QWidget):
 
         card_title = QLabel("PLANO DE SESSOES")
         card_title.setObjectName("cardTitle")
-        card_title.setFont(_spaced_font(9, 2.0))
+        card_title.setFont(spaced_font(9, 2.0))
         layout.addWidget(card_title)
 
         def row_spin(label: str, value: int, min_val: int, max_val: int):
@@ -512,6 +506,7 @@ class TimerWindow(QWidget):
         self._settings.theme = THEME_LIGHT if self._settings.theme == THEME_DARK else THEME_DARK
         self._settings.save()
         self._apply_theme()
+        self.theme_changed.emit(self._settings.theme)
 
     def _toggle_settings_panel(self):
         self._settings_card.setVisible(self._settings_btn.isChecked())
@@ -528,6 +523,11 @@ class TimerWindow(QWidget):
     @property
     def tray_state(self) -> str:
         return STATE_LABELS[self._state][0]
+
+    @property
+    def tray_accent(self) -> str:
+        """Cor inicial do gradiente do estado atual, usada no icone da bandeja."""
+        return gradient_for(self._state)[0]
 
     @property
     def is_paused(self) -> bool:
